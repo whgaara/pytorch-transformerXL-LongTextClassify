@@ -4,7 +4,7 @@ import pkuseg
 import numpy as np
 
 from tqdm import tqdm
-from bert.common.tokenizers import Tokenizer
+from transformerXL.common.tokenizers import Tokenizer
 from pretrain_config import *
 from torch.utils.data import Dataset
 

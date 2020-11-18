@@ -3,14 +3,15 @@ import torch
 import torch.nn as nn
 
 
-class MultiHeadSelfAttention(nn.Module):
+# 相对位置多头自注意力
+class RelPosMultiHeadSelfAttention(nn.Module):
     def __init__(self,
                  attention_head_num,
                  attention_head_size,
                  size_per_head=512,
                  dropout_prob=0.1
                  ):
-        super(MultiHeadSelfAttention, self).__init__()
+        super(RelPosMultiHeadSelfAttention, self).__init__()
         self.attention_head_num = attention_head_num
         self.attention_head_size = attention_head_size
         self.size_per_head = size_per_head

@@ -2,8 +2,8 @@
 # 工具函数
 import re
 import unicodedata
-from bert.common.snippets import is_string, is_py2
-from bert.common.snippets import open
+from transformerXL.common.snippets import is_string, is_py2
+from transformerXL.common.snippets import open
 
 
 def load_vocab(dict_path, encoding='utf-8', simplified=False, startswith=None):

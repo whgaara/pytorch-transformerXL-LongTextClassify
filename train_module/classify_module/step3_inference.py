@@ -5,7 +5,7 @@ import torch
 
 from tqdm import tqdm
 from pretrain_config import PretrainPath, device, SentenceLength, VocabPath
-from bert.common.tokenizers import Tokenizer
+from transformerXL.common.tokenizers import Tokenizer
 
 
 class Inference(object):

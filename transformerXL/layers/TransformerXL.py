@@ -1,9 +1,9 @@
 import torch.nn as nn
 
 from pretrain_config import *
-from bert.layers.TransformerXLEmbeddings import TokenEmbedding, RelPositionalEmbedding
-from bert.layers.TransformerXLBlock import TransformerXLBlock
-from bert.layers.Classify import Classify
+from transformerXL.layers.TransformerXLEmbeddings import TokenEmbedding, RelPositionalEmbedding
+from transformerXL.layers.TransformerXLBlock import TransformerXLBlock
+from transformerXL.layers.Classify import Classify
 
 
 class TransformerXL(nn.Module):
@@ -31,7 +31,7 @@ class TransformerXL(nn.Module):
         self.intermediate_size = intermediate_size
 
         # 申明网络
-        self.bert_emd = TokenEmbedding(vocab_size=self.vocab_size, hidden_size=self.hidden_size)
+        self.token_emd = TokenEmbedding(vocab_size=self.vocab_size, hidden_size=self.hidden_size)
         self.transformer_blocks = nn.ModuleList(
             TransformerXLBlock(
                 hidden_size=self.hidden_size,
@@ -64,14 +64,18 @@ class TransformerXL(nn.Module):
             attention_masks.append(attention_mask.tolist())
         return torch.tensor(attention_masks)
 
-    # def forward(self, input_token, segment_ids):
-    #     # embedding
-    #     embedding_x = self.bert_emd(input_token, segment_ids)
-    #     attention_mask = self.gen_attention_masks(segment_ids).to(device)
-    #     feedforward_x = None
-    #     # transformer
-    #     for i in range(self.num_hidden_layers):
-    #         feedforward_x = self.transformer_blocks[i](embedding_x, attention_mask)
-    #     # mlm
-    #     output = self.classify(feedforward_x)
-    #     return output
+    def forward(self, desc_segments, type_segments):
+        memories = None
+        for input_token, segment_ids in zip(desc_segments, type_segments):
+            # embedding
+            embedding_x = self.token_emd(input_token)
+            attention_mask = self.gen_attention_masks(segment_ids).to(device)
+            transformerxl_block_x = None
+            # transformer
+            for i in range(self.num_hidden_layers):
+                transformerxl_block_x, new_memories = \
+                    self.transformer_blocks[i](embedding_x, attention_mask, memories)
+                memories = new_memories
+            # mlm
+            output = self.classify(transformerxl_block_x)
+            return output
