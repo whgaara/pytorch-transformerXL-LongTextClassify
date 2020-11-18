@@ -1,7 +1,7 @@
 import torch.nn as nn
 
 from pretrain_config import *
-from transformerXL.layers.TransformerXLEmbeddings import TokenEmbedding, RelPositionalEmbedding
+from transformerXL.layers.TransformerXLEmbeddings import TokenEmbedding, RelPositionEmbedding
 from transformerXL.layers.TransformerXLBlock import TransformerXLBlock
 from transformerXL.layers.Classify import Classify
 
@@ -71,7 +71,7 @@ class TransformerXL(nn.Module):
             embedding_x = self.token_emd(input_token)
             attention_mask = self.gen_attention_masks(segment_ids).to(device)
             transformerxl_block_x = None
-            # transformer
+            # transformer block
             for i in range(self.num_hidden_layers):
                 transformerxl_block_x, new_memories = \
                     self.transformer_blocks[i](embedding_x, attention_mask, memories)

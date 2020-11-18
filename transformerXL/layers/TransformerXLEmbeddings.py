@@ -4,9 +4,9 @@ import torch.nn as nn
 from pretrain_config import device
 
 
-class RelPositionalEmbedding(nn.Module):
+class RelPositionEmbedding(nn.Module):
     def __init__(self, demb):
-        super(RelPositionalEmbedding, self).__init__()
+        super(RelPositionEmbedding, self).__init__()
         self.demb = demb
         self.inv_freq = 1 / (10000 ** (torch.arange(0.0, demb, 2.0) / demb))
 
@@ -32,6 +32,6 @@ class TokenEmbedding(nn.Module):
 
 
 if __name__ == '__main__':
-    r = RelPositionalEmbedding(768)
+    r = RelPositionEmbedding(768)
     s = r(128, 128)
     x = 1

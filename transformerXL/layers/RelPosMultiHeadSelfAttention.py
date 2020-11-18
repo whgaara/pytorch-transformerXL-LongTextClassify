@@ -2,6 +2,8 @@ import math
 import torch
 import torch.nn as nn
 
+from transformerXL.layers.TransformerXLEmbeddings import RelPositionEmbedding
+
 
 # 相对位置多头自注意力
 class RelPosMultiHeadSelfAttention(nn.Module):
@@ -18,9 +20,15 @@ class RelPosMultiHeadSelfAttention(nn.Module):
         self.out_dim = attention_head_num * attention_head_size
 
         # 申明网络
-        self.q_dense = nn.Linear(self.out_dim, self.out_dim)
-        self.k_dense = nn.Linear(self.out_dim, self.out_dim)
-        self.v_dense = nn.Linear(self.out_dim, self.out_dim)
+        self.rel_position_embedding = RelPositionEmbedding(self.out_dim)
+
+        self.W_q = nn.Linear(self.out_dim, self.out_dim)
+        self.W_ke = nn.Linear(self.out_dim, self.out_dim)
+        self.W_v = nn.Linear(self.out_dim, self.out_dim)
+
+        # ????多头在这里如何拆分
+        self.W_kr = nn.Linear(self.out_dim, self.out_dim)
+
         self.softmax = nn.Softmax(dim=-1)
         self.dropout = nn.Dropout(dropout_prob)
         self.o_dense = nn.Linear(self.out_dim, self.out_dim)
