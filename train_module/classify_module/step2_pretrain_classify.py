@@ -11,10 +11,10 @@ from bert.layers.BertClassify import BertClassify
 
 if __name__ == '__main__':
     onehot_type = False
-    labelcount = int(open(LabelCountPath, 'r', encoding='utf-8').read().strip())
+    labelcount = int(open(Assistant, 'r', encoding='utf-8').read().strip().split(',')[1])
     bert = BertClassify(kinds_num=labelcount).to(device)
 
-    dataset = BertDataSet(CorpusPath)
+    dataset = TransformerXLDataSet(CorpusPath)
     dataloader = DataLoader(dataset=dataset, batch_size=BatchSize, shuffle=True, drop_last=True)
     testset = RobertaTestSet(EvalPath)
 

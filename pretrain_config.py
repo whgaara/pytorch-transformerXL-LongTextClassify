@@ -6,7 +6,8 @@ device = torch.device('cuda:0' if cuda_condition else 'cpu')
 
 # ## 模型文件路径 ## #
 SourcePath = '../../data/src_data/src_set.csv'
-CorpusPath = '../../data/train_data/train_set.csv'
+# CorpusPath = '../../data/train_data/train_set.csv'
+CorpusPath = '../../data/train_data/train_demo.csv'
 EvalPath = '../../data/test_data/eval_set.csv'
 TestPath = '../../data/test_data/test_a.csv'
 
