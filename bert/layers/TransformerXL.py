@@ -3,7 +3,7 @@ import torch.nn as nn
 from pretrain_config import *
 from bert.common.tokenizers import Tokenizer
 from bert.layers.Transformer import Transformer
-from bert.layers.BertEmbeddings import BertEmbeddings
+from bert.layers.TransformerXLEmbeddings import BertEmbeddings
 from bert.layers.Classify import Classify
 
 

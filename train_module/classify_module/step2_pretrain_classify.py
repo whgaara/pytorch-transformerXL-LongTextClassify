@@ -6,7 +6,7 @@ import torch.nn as nn
 from torch.optim import Adam
 from torch.utils.data import DataLoader
 from bert.data.classify_dataset import *
-from bert.layers.BertClassify import BertClassify
+from bert.layers.TransformerXL import BertClassify
 
 
 if __name__ == '__main__':

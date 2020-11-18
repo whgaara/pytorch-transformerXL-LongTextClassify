@@ -18,7 +18,7 @@ Assistant = '../../data/train_data/assistant.txt'
 Epochs = 16
 LearningRate = 1e-5
 BatchSize = 64
-SentenceLength = 128
+SentenceLength = 512
 PretrainPath = '../../checkpoint/finetune/mlm_trained_%s.model' % SentenceLength
 # ## 训练调试参数结束 ## #
 
