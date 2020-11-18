@@ -4,7 +4,7 @@ from bert.layers.FeedForward import FeedForward
 from bert.layers.MultiHeadSelfAttention import MultiHeadSelfAttention
 
 
-class Transformer(nn.Module):
+class TransformerXLBlock(nn.Module):
     def __init__(self,
                  hidden_size,
                  attention_head_num,
@@ -12,7 +12,7 @@ class Transformer(nn.Module):
                  intermediate_size,
                  dropout_prob=0.1
                  ):
-        super(Transformer, self).__init__()
+        super(TransformerXLBlock, self).__init__()
         self.multi_attention = MultiHeadSelfAttention(
             attention_head_num=attention_head_num,
             attention_head_size=attention_head_size)

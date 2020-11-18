@@ -15,7 +15,7 @@ class TransformerXLDataSet(Dataset):
         self.corpus_path = corpus_path
         self.descriptions = []
         self.labels = []
-        self.segment_length = 511
+        self.segment_length = SentenceLength - 1
 
         with open(Assistant, 'r', encoding='utf-8') as f:
             line = f.read().strip().split(',')
@@ -89,7 +89,7 @@ class TransformerXLTestSet(Dataset):
         self.eval_path = eval_path
         self.descriptions = []
         self.labels = []
-        self.segment_length = 511
+        self.segment_length = SentenceLength - 1
 
         with open(Assistant, 'r', encoding='utf-8') as f:
             line = f.read().strip().split(',')

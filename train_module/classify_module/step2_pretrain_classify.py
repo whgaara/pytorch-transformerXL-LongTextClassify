@@ -6,13 +6,13 @@ import torch.nn as nn
 from torch.optim import Adam
 from torch.utils.data import DataLoader
 from bert.data.classify_dataset import *
-from bert.layers.TransformerXL import BertClassify
+from bert.layers.TransformerXL import TransformerXL
 
 
 if __name__ == '__main__':
     onehot_type = False
     labelcount = int(open(Assistant, 'r', encoding='utf-8').read().strip().split(',')[1])
-    bert = BertClassify(kinds_num=labelcount).to(device)
+    bert = TransformerXL(kinds_num=labelcount).to(device)
 
     dataset = TransformerXLDataSet(CorpusPath)
     dataloader = DataLoader(dataset=dataset, batch_size=BatchSize, shuffle=True, drop_last=True)
