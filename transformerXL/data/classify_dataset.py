@@ -9,6 +9,9 @@ from pretrain_config import *
 from torch.utils.data import Dataset
 
 
+# 要多个batch，就要考虑将所有输入padding成长度一样的值，否则只有1条条输入。
+
+
 class TransformerXLDataSet(Dataset):
     def __init__(self, corpus_path):
         # self.tokenizer = Tokenizer(VocabPath)

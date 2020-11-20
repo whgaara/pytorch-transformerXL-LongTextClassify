@@ -13,7 +13,7 @@ class TransformerXLBlock(nn.Module):
                  dropout_prob=0.1
                  ):
         super(TransformerXLBlock, self).__init__()
-        self.multi_attention = RelPosMultiHeadSelfAttention(
+        self.rel_pos_multi_attention = RelPosMultiHeadSelfAttention(
             attention_head_num=attention_head_num,
             attention_head_size=attention_head_size)
         self.attention_layernorm = nn.LayerNorm(hidden_size)
@@ -23,8 +23,8 @@ class TransformerXLBlock(nn.Module):
                 dropout_prob)
         self.feedforward_layernorm = nn.LayerNorm(hidden_size)
 
-    def forward(self, x, attention_mask, memories):
-        attention_x = self.multi_attention(x, attention_mask)
+    def forward(self, x, rel_pos_emb, attention_mask, memories, layer_num):
+        attention_x = self.rel_pos_multi_attention(x, rel_pos_emb, attention_mask, memories, layer_num)
         attention_x = x + attention_x
         attention_x = self.attention_layernorm(attention_x)
 

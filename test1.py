@@ -1,6 +1,10 @@
 import torch
 
-all_ones = torch.ones([3, 4])
+a = torch.ones([2, 2, 3, 3], dtype=torch.float)
+print(a.size())
 
-dec_attn_mask = (torch.triu(all_ones, 12) + torch.tril(all_ones, -5)).byte()[:, :, None]
-print(dec_attn_mask)
+b = torch.tensor([[[2, 3, 4], [1, 1, 1], [4, 5, 6]]], dtype=torch.float)
+# b = b.unsqueeze(1)
+print(b.size())
+
+print(a - b)
