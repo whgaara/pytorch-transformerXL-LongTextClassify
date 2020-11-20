@@ -25,7 +25,7 @@ PretrainPath = '../../checkpoint/finetune/mlm_trained_%s.model' % SentenceLength
 
 # ## 通用参数 ## #
 DropOut = 0.1
-VocabSize = open(Assistant, 'r', encoding='utf-8').readline().split(',')[0]
+VocabSize = int(open(Assistant, 'r', encoding='utf-8').readline().split(',')[0])
 HiddenSize = 768
 HiddenLayerNum = 12
 IntermediateSize = 3072

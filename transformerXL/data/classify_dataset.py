@@ -22,8 +22,8 @@ class TransformerXLDataSet(Dataset):
 
         with open(Assistant, 'r', encoding='utf-8') as f:
             line = f.read().strip().split(',')
-            self.cls = int(line[0])
-            self.padding = self.cls + 1
+            self.cls = int(line[0]) - 1
+            self.padding = int(line[0])
 
         with open(corpus_path, 'r', encoding='utf-8') as f:
             for line in f:
@@ -96,8 +96,8 @@ class TransformerXLTestSet(Dataset):
 
         with open(Assistant, 'r', encoding='utf-8') as f:
             line = f.read().strip().split(',')
-            self.cls = int(line[0])
-            self.padding = self.cls + 1
+            self.cls = int(line[0]) - 1
+            self.padding = int(line[0])
 
         with open(eval_path, 'r', encoding='utf-8') as f:
             for line in f:

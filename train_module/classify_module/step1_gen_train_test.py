@@ -36,7 +36,8 @@ class PretrainProcess(object):
                     self.train_data_set[label] = []
                     self.train_data_set[label].append(desc_list)
 
-        f.write(str(self.max_char_num) + ',' +
+        # 补充了cls和padding两个字符
+        f.write(str(self.max_char_num + 2) + ',' +
                 str(self.max_label_num) + ',' +
                 str(self.max_sentence_length) + '\n')
         f.close()

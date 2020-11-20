@@ -20,7 +20,7 @@ class RelPositionEmbedding(nn.Module):
 class TokenEmbedding(nn.Module):
     def __init__(self, vocab_size, hidden_size, dropout_prob=0.1):
         super(TokenEmbedding, self).__init__()
-        self.token_embeddings = nn.Embedding(vocab_size, hidden_size)
+        self.token_embeddings = nn.Embedding(vocab_size + 2, hidden_size)
         self.emb_normalization = nn.LayerNorm(hidden_size)
         self.emb_dropout = nn.Dropout(p=dropout_prob)
 

@@ -67,7 +67,11 @@ class TransformerXL(nn.Module):
 
     def forward(self, desc_segments, type_segments):
         memories = None
-        for input_token, segment_ids in zip(desc_segments, type_segments):
+        # 这里需要遍历的是第二维度
+        _, segments_count, _ = desc_segments.size()
+        for segments_num in range(segments_count):
+            input_token = desc_segments[:, segments_num, :]
+            segment_ids = type_segments[:, segments_num, :]
             # embedding
             embedding_x = self.token_emd(input_token)
             rel_pos_emb = self.rel_post_emb(SentenceLength, MemoryLength)
