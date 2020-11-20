@@ -32,6 +32,7 @@ class TransformerXL(nn.Module):
 
         # 申明网络
         self.token_emd = TokenEmbedding(vocab_size=self.vocab_size, hidden_size=self.hidden_size)
+        self.rel_post_emb = RelPositionEmbedding(self.hidden_size)
         self.transformer_blocks = nn.ModuleList(
             TransformerXLBlock(
                 hidden_size=self.hidden_size,
@@ -69,13 +70,20 @@ class TransformerXL(nn.Module):
         for input_token, segment_ids in zip(desc_segments, type_segments):
             # embedding
             embedding_x = self.token_emd(input_token)
-            attention_mask = self.gen_attention_masks(segment_ids).to(device)
-            transformerxl_block_x = None
+            rel_pos_emb = self.rel_post_emb(SentenceLength, MemoryLength)
+
             # transformer block
+            transformerxl_block_x = None
+            attention_mask = self.gen_attention_masks(segment_ids).to(device)
             for i in range(self.num_hidden_layers):
-                transformerxl_block_x, new_memories = \
-                    self.transformer_blocks[i](embedding_x, attention_mask, memories)
-                memories = new_memories
-            # mlm
-            output = self.classify(transformerxl_block_x)
-            return output
+                if i == 0:
+                    transformerxl_block_x, new_memories = \
+                        self.transformer_blocks[i](embedding_x, rel_pos_emb, attention_mask, memories, i)
+                    memories = new_memories
+                else:
+                    transformerxl_block_x, new_memories = \
+                        self.transformer_blocks[i](transformerxl_block_x, rel_pos_emb, attention_mask, memories, i)
+                    memories = new_memories
+
+        output = self.classify(transformerxl_block_x)
+        return output
