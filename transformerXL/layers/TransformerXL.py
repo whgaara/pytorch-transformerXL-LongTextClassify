@@ -70,8 +70,10 @@ class TransformerXL(nn.Module):
         # 这里需要遍历的是第二维度
         _, segments_count, _ = desc_segments.size()
         for segments_num in range(segments_count):
+            # 抽取当前batch的当前segment
             input_token = desc_segments[:, segments_num, :]
             segment_ids = type_segments[:, segments_num, :]
+
             # embedding
             embedding_x = self.token_emd(input_token)
             rel_pos_emb = self.rel_post_emb(SentenceLength, MemoryLength)

@@ -18,6 +18,8 @@ class RelPosMultiHeadSelfAttention(nn.Module):
         self.out_dim = attention_head_num * attention_head_size
 
         # 申明网络
+        self.init_parameter = nn.Parameter(torch.randn(MemoryLength, self.out_dim)).expand(
+            [BatchSize, MemoryLength, self.out_dim])
         self.W_q = nn.Linear(self.out_dim, self.out_dim, bias=False)
         self.W_ke = nn.Linear(self.out_dim, self.out_dim, bias=False)
         self.W_v = nn.Linear(self.out_dim, self.out_dim, bias=False)
@@ -61,14 +63,14 @@ class RelPosMultiHeadSelfAttention(nn.Module):
             vx = torch.cat((sg_m, x), dim=1)
         else:
             qx = x
-            kx = x
-            vx = x
+            kx = torch.cat((self.init_parameter, x), dim=1)
+            vx = torch.cat((self.init_parameter, x), dim=1)
 
         qx = self.W_q(qx)
         kx = self.W_ke(kx)
         vx = self.W_v(vx)
         kr = self.W_kr(rel_pos_emb)
-        k_length = kx.size()[0]
+        k_length = kx.size()[1]
         r_length = kr.size()[0]
 
         # 接下来对qx，kx，vx进行reshape，此时qx的维度是（qlen，768），kx是（qlen+mlen，768），vx也是（qlen+mlen，768）
