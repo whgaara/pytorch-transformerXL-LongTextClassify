@@ -18,8 +18,6 @@ class RelPosMultiHeadSelfAttention(nn.Module):
         self.out_dim = attention_head_num * attention_head_size
 
         # 申明网络
-        self.init_parameter = nn.Parameter(torch.randn(MemoryLength, self.out_dim)).expand(
-            [BatchSize, MemoryLength, self.out_dim])
         self.W_q = nn.Linear(self.out_dim, self.out_dim, bias=False)
         self.W_ke = nn.Linear(self.out_dim, self.out_dim, bias=False)
         self.W_v = nn.Linear(self.out_dim, self.out_dim, bias=False)
@@ -54,18 +52,15 @@ class RelPosMultiHeadSelfAttention(nn.Module):
         return new_bd
 
     def forward(self, x, rel_pos_emb, attention_mask, memories, layer_num):
-        if memories:
-            b, m_len, m_hidden_size = memories.size()
-            assert m_len >= MemoryLength and layer_num > 0
-            qx = x
-            sg_m = memories[layer_num][:, m_len-MemoryLength:m_len, :]
-            kx = torch.cat((sg_m, x), dim=1)
-            vx = torch.cat((sg_m, x), dim=1)
-        else:
-            qx = x
-            kx = torch.cat((self.init_parameter, x), dim=1)
-            vx = torch.cat((self.init_parameter, x), dim=1)
+        # 初始化qx，kx，vx
+        b, m_len, m_hidden_size = memories.size()
+        assert m_len >= MemoryLength
+        qx = x
+        sg_m = memories[layer_num][:, m_len-MemoryLength:m_len, :]
+        kx = torch.cat((sg_m, x), dim=1)
+        vx = torch.cat((sg_m, x), dim=1)
 
+        # 计算q，k，v
         qx = self.W_q(qx)
         kx = self.W_ke(kx)
         vx = self.W_v(vx)
@@ -99,28 +94,20 @@ class RelPosMultiHeadSelfAttention(nn.Module):
 
         # 防止padding补全的0经过softmax后影响结果，对每个0值都加一个很大的负数，这样softmax后也会约等于0
         # attention_mask的shape为：[batch_size, qlen, klen]
-        if layer_num:
-            rel_pos_attention = rel_pos_attention.view(BatchSize,
-                                                       self.attention_head_num,
-                                                       SentenceLength,
-                                                       k_length)
-            m_supplement = torch.ones([SentenceLength, MemoryLength], dtype=torch.float)
-            m_supplement = m_supplement.expand([BatchSize, SentenceLength, MemoryLength])
-            attention_mask = torch.cat((m_supplement, attention_mask), dim=-1)
-            add_mask = (1.0 - attention_mask.float()) * 1e9
-            rel_pos_attention -= add_mask
-        else:
-            rel_pos_attention = rel_pos_attention.view(BatchSize,
-                                                       self.attention_head_num,
-                                                       SentenceLength,
-                                                       k_length)
-            add_mask = (1.0 - attention_mask.float()) * 1e9
-            rel_pos_attention -= add_mask
+        rel_pos_attention = rel_pos_attention.view(BatchSize,
+                                                   self.attention_head_num,
+                                                   SentenceLength,
+                                                   k_length)
+        m_supplement = torch.ones([SentenceLength, MemoryLength], dtype=torch.long)
+        m_supplement = m_supplement.expand([BatchSize, SentenceLength, MemoryLength])
+        attention_mask = torch.cat((m_supplement, attention_mask), dim=-1)
+        add_mask = (1.0 - attention_mask.float()) * 1e9
+        rel_pos_attention -= add_mask
 
-        # rel_pos_attention = rel_pos_attention.view(SentenceLength, k_length, BatchSize, self.attention_head_num)
         rel_pos_attention = self.softmax(rel_pos_attention)
         rel_pos_attention = torch.einsum('bnij,jbnd->ibnd', (rel_pos_attention, vx))
-        rel_pos_attention = rel_pos_attention.view(BatchSize, SentenceLength, self.out_dim)
+        # 因为view()需要Tensor中的元素地址是连续的，但可能出现Tensor不连续的情况，所以先用 .contiguous() 将其在内存中变成连续分布：
+        rel_pos_attention = rel_pos_attention.contiguous().view(BatchSize, SentenceLength, self.out_dim)
         rel_pos_attention = self.dropout(rel_pos_attention)
         rel_pos_attention = self.o_dense(rel_pos_attention)
 

@@ -24,7 +24,7 @@ class TransformerXLBlock(nn.Module):
         self.feedforward_layernorm = nn.LayerNorm(hidden_size)
 
     def forward(self, x, rel_pos_emb, attention_mask, memories, layer_num):
-        attention_x = self.rel_pos_multi_attention(x, rel_pos_emb, attention_mask, memories, layer_num)
+        attention_x, memories = self.rel_pos_multi_attention(x, rel_pos_emb, attention_mask, memories, layer_num)
         attention_x = x + attention_x
         attention_x = self.attention_layernorm(attention_x)
 
@@ -32,4 +32,4 @@ class TransformerXLBlock(nn.Module):
         feedforward_x = attention_x + feedforward_x
         feedforward_x = self.feedforward_layernorm(feedforward_x)
 
-        return feedforward_x
+        return feedforward_x, memories

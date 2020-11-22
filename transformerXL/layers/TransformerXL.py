@@ -31,6 +31,8 @@ class TransformerXL(nn.Module):
         self.intermediate_size = intermediate_size
 
         # 申明网络
+        self.init_memories = nn.Parameter(torch.randn(1, BatchSize, MemoryLength, self.hidden_size)).expand(
+            [BatchSize, MemoryLength, self.hidden_size])
         self.token_emd = TokenEmbedding(vocab_size=self.vocab_size, hidden_size=self.hidden_size)
         self.rel_post_emb = RelPositionEmbedding(self.hidden_size)
         self.transformer_blocks = nn.ModuleList(
@@ -66,7 +68,6 @@ class TransformerXL(nn.Module):
         return torch.tensor(attention_masks)
 
     def forward(self, desc_segments, type_segments):
-        memories = None
         # 这里需要遍历的是第二维度
         _, segments_count, _ = desc_segments.size()
         for segments_num in range(segments_count):
@@ -84,7 +85,7 @@ class TransformerXL(nn.Module):
             for i in range(self.num_hidden_layers):
                 if i == 0:
                     transformerxl_block_x, new_memories = \
-                        self.transformer_blocks[i](embedding_x, rel_pos_emb, attention_mask, memories, i)
+                        self.transformer_blocks[i](embedding_x, rel_pos_emb, attention_mask, self.init_memories, i)
                     memories = new_memories
                 else:
                     transformerxl_block_x, new_memories = \
