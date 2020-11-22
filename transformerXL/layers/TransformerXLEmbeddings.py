@@ -8,7 +8,7 @@ class RelPositionEmbedding(nn.Module):
     def __init__(self, demb):
         super(RelPositionEmbedding, self).__init__()
         self.demb = demb
-        self.inv_freq = 1 / (10000 ** (torch.arange(0.0, demb, 2.0) / demb))
+        self.inv_freq = 1 / (10000 ** (torch.arange(0.0, demb, 2.0) / demb)).to(device)
 
     def forward(self, seq_len, mem_len):
         pos_seq = torch.arange(1.0, seq_len + mem_len + 1).to(device)
