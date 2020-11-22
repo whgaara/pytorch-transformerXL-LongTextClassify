@@ -13,8 +13,6 @@ class RelPosMultiHeadSelfAttention(nn.Module):
                  dropout_prob=0.1
                  ):
         super(RelPosMultiHeadSelfAttention, self).__init__()
-        # self.current_layer_num = 0
-        # self.current_segment_num = 0
         self.attention_head_num = attention_head_num
         self.attention_head_size = attention_head_size
         self.out_dim = attention_head_num * attention_head_size
@@ -33,34 +31,18 @@ class RelPosMultiHeadSelfAttention(nn.Module):
 
     def update_memories_by_layer(self, memories, last_hidden, layer_num, segment_num):
         with torch.no_grad():
-            memories = memories.tolist()
-            last_hidden = last_hidden.tolist()
-            tmp = memories[layer_num]
-            for bz in range(len(tmp)):
-                tmp[bz][segment_num*SentenceLength+MemoryLength:(segment_num+1)*SentenceLength+MemoryLength] =\
+            for bz in range(len(memories[layer_num])):
+                memories[layer_num][bz][segment_num*SentenceLength+MemoryLength:(segment_num+1)*SentenceLength+MemoryLength] =\
                     last_hidden[bz][0:SentenceLength]
-            memories[layer_num] = tmp
-            memories = torch.tensor(memories, dtype=torch.float)
             return memories
 
     def rel_shift(self, bd):
-        new_bd = []
         qlen, klen, bsz, n_head = bd.size()
-        bd = bd.tolist()
-
         for qi in range(qlen):
-            x = bd[qi][qlen-1-qi:]
-            y = numpy.zeros((qlen-1-qi, bsz, n_head), dtype=float).tolist()
-            new_q = x + y
-            new_bd.append(new_q)
-
-        new_bd = torch.tensor(new_bd, dtype=torch.float)
-        return new_bd
+            bd[qi] = torch.cat((bd[qi][qlen-1-qi:], torch.zeros([qlen-1-qi, bsz, n_head])), dim=0)
+        return bd
 
     def forward(self, x, rel_pos_emb, attention_mask, memories, layer_num, segment_num):
-        # self.current_layer_num = layer_num
-        # self.current_segment_num = segment_num
-
         # 初始化qx，kx，vx
         layer_count, b, total_len, m_hidden_size = memories.size()
         assert total_len >= MemoryLength
@@ -85,16 +67,16 @@ class RelPosMultiHeadSelfAttention(nn.Module):
 
         # 接下来进行多头a、c矩阵的计算，结果的shape：qlen x klen x bsz x n_head
         qx_u = qx + self.u
-        ac = torch.einsum('ibnd,jbnd->ijbn', [qx_u, kx]).to(device)
+        ac = torch.einsum('ibnd,jbnd->ijbn', [qx_u, kx])
 
         # 接下来进行多头b、d矩阵的计算，结果的shape：qlen x klen x bsz x n_head
         qx_v = qx + self.v
-        bd = torch.einsum('ibnd,jnd->ijbn', [qx_v, kr]).to(device)
+        bd = torch.einsum('ibnd,jnd->ijbn', [qx_v, kr])
 
         # 接下来，因为BD部分是qx和v乘以相对位置，原理同bert的qi*kj
         # 但是这里因为是相对位置，所以例如q0和k0相乘时，其相对位置是mlen，且q0最长的相对位置只有mlen
         # 而q511的最长相对位置有51bd1+mlen，最终效果相当于所有的q与所有的相对位置（m+511）相乘，但q要按照位置进行平移。
-        bd = self.rel_shift(bd).to(device)
+        bd = self.rel_shift(bd)
 
         # shape：qlen x klen x bsz x n_head
         rel_pos_attention = ac + bd
@@ -103,20 +85,20 @@ class RelPosMultiHeadSelfAttention(nn.Module):
 
         # 防止padding补全的0经过softmax后影响结果，对每个0值都加一个很大的负数，这样softmax后也会约等于0
         # attention_mask的shape为：[batch_size, qlen, klen]
-        rel_pos_attention = rel_pos_attention.view(BatchSize,
-                                                   self.attention_head_num,
-                                                   SentenceLength,
-                                                   k_length)
-        m_supplement = torch.ones([SentenceLength, MemoryLength], dtype=torch.long).to(device)
-        m_supplement = m_supplement.expand([BatchSize, SentenceLength, MemoryLength]).to(device)
-        attention_mask = torch.cat((m_supplement, attention_mask), dim=-1).to(device)
-        add_mask = (1.0 - attention_mask.float()) * 1e9
-        rel_pos_attention -= add_mask
+        # rel_pos_attention = rel_pos_attention.view(BatchSize,
+        #                                            self.attention_head_num,
+        #                                            SentenceLength,
+        #                                            k_length)
+        # m_supplement = torch.ones([SentenceLength, MemoryLength], dtype=torch.long).to(device)
+        # m_supplement = m_supplement.expand([BatchSize, SentenceLength, MemoryLength]).to(device)
+        # attention_mask = torch.cat((m_supplement, attention_mask), dim=-1).to(device)
+        # add_mask = (1.0 - attention_mask.float()) * 1e9
+        # rel_pos_attention -= add_mask
 
         rel_pos_attention = self.softmax(rel_pos_attention)
-        rel_pos_attention = torch.einsum('bnij,jbnd->ibnd', (rel_pos_attention, vx)).to(device)
+        rel_pos_attention = torch.einsum('ijbn,jbnd->ibnd', (rel_pos_attention, vx))
         # 因为view()需要Tensor中的元素地址是连续的，但可能出现Tensor不连续的情况，所以先用 .contiguous() 将其在内存中变成连续分布：
-        rel_pos_attention = rel_pos_attention.contiguous().view(BatchSize, SentenceLength, self.out_dim).to(device)
+        rel_pos_attention = rel_pos_attention.contiguous().view(BatchSize, SentenceLength, self.out_dim)
         rel_pos_attention = self.dropout(rel_pos_attention)
         rel_pos_attention = self.o_dense(rel_pos_attention)
 
