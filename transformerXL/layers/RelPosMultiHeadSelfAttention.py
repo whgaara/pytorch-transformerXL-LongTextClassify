@@ -39,7 +39,7 @@ class RelPosMultiHeadSelfAttention(nn.Module):
     def rel_shift(self, bd):
         qlen, klen, bsz, n_head = bd.size()
         for qi in range(qlen):
-            bd[qi] = torch.cat((bd[qi][qlen-1-qi:], torch.zeros([qlen-1-qi, bsz, n_head])), dim=0)
+            bd[qi] = torch.cat((bd[qi][qlen-1-qi:], torch.zeros([qlen-1-qi, bsz, n_head]).to(device)), dim=0)
         return bd
 
     def forward(self, x, rel_pos_emb, attention_mask, memories, layer_num, segment_num):
