@@ -55,10 +55,9 @@ if __name__ == '__main__':
             accuracy_count = 0
             for test_data in testset:
                 test_count += 1
-                input_token = test_data['input_token_ids'].unsqueeze(0).to(device)
-                segment_ids = test_data['segment_ids'].unsqueeze(0).to(device)
-                input_token_list = input_token.tolist()
-                input_len = len([x for x in input_token_list[0] if x]) - 2
+                test_data = {k: v.to(device) for k, v in test_data.items()}
+                input_token = test_data['desc_segments'].unsqueeze(0).to(device)
+                segment_ids = test_data['type_segments'].unsqueeze(0).to(device)
                 label = test_data['token_ids_labels'].tolist()
                 mlm_output = transformerXL(input_token, segment_ids)
                 output_tensor = torch.nn.Softmax(dim=-1)(mlm_output)

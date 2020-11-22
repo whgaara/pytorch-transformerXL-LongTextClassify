@@ -4,9 +4,9 @@ import pkuseg
 import numpy as np
 
 from tqdm import tqdm
-from transformerXL.common.tokenizers import Tokenizer
 from pretrain_config import *
 from torch.utils.data import Dataset
+from transformerXL.common.tokenizers import Tokenizer
 
 
 # 要多个batch，就要考虑将所有输入padding成长度一样的值，否则只有1条条输入。
