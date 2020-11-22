@@ -38,7 +38,7 @@ class PretrainProcess(object):
 
         # 补充了cls和padding两个字符
         f.write(str(self.max_char_num + 2) + ',' +
-                str(self.max_label_num) + ',' +
+                str(self.max_label_num + 1) + ',' +
                 str(self.max_sentence_length) + '\n')
         f.close()
 
