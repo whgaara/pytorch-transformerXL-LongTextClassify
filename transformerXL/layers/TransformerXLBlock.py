@@ -23,8 +23,8 @@ class TransformerXLBlock(nn.Module):
                 dropout_prob)
         self.feedforward_layernorm = nn.LayerNorm(hidden_size)
 
-    def forward(self, x, rel_pos_emb, attention_mask, memories, layer_num):
-        attention_x, memories = self.rel_pos_multi_attention(x, rel_pos_emb, attention_mask, memories, layer_num)
+    def forward(self, x, rel_pos_emb, attention_mask, memories, layer_num, segments_num):
+        attention_x, memories = self.rel_pos_multi_attention(x, rel_pos_emb, attention_mask, memories, layer_num, segments_num)
         attention_x = x + attention_x
         attention_x = self.attention_layernorm(attention_x)
 

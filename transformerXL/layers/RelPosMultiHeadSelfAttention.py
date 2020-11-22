@@ -13,6 +13,8 @@ class RelPosMultiHeadSelfAttention(nn.Module):
                  dropout_prob=0.1
                  ):
         super(RelPosMultiHeadSelfAttention, self).__init__()
+        # self.current_layer_num = 0
+        # self.current_segment_num = 0
         self.attention_head_num = attention_head_num
         self.attention_head_size = attention_head_size
         self.out_dim = attention_head_num * attention_head_size
@@ -29,13 +31,17 @@ class RelPosMultiHeadSelfAttention(nn.Module):
         self.dropout = nn.Dropout(dropout_prob)
         self.o_dense = nn.Linear(self.out_dim, self.out_dim)
 
-    def update_memories(self, memories, last_hidden, layer_num):
+    def update_memories_by_layer(self, memories, last_hidden, layer_num, segment_num):
         with torch.no_grad():
-            if memories:
-                memories[layer_num] = torch.cat((memories[layer_num], last_hidden), dim=1)
-            else:
-                memories[layer_num] = last_hidden
-        return memories
+            memories = memories.tolist()
+            last_hidden = last_hidden.tolist()
+            tmp = memories[layer_num]
+            for bz in range(len(tmp)):
+                tmp[bz][segment_num*SentenceLength+MemoryLength:(segment_num+1)*SentenceLength+MemoryLength] =\
+                    last_hidden[bz][0:SentenceLength]
+            memories[layer_num] = tmp
+            memories = torch.tensor(memories, dtype=torch.float)
+            return memories
 
     def rel_shift(self, bd):
         new_bd = []
@@ -51,12 +57,15 @@ class RelPosMultiHeadSelfAttention(nn.Module):
         new_bd = torch.tensor(new_bd, dtype=torch.float)
         return new_bd
 
-    def forward(self, x, rel_pos_emb, attention_mask, memories, layer_num):
+    def forward(self, x, rel_pos_emb, attention_mask, memories, layer_num, segment_num):
+        # self.current_layer_num = layer_num
+        # self.current_segment_num = segment_num
+
         # 初始化qx，kx，vx
-        b, m_len, m_hidden_size = memories.size()
-        assert m_len >= MemoryLength
+        layer_count, b, total_len, m_hidden_size = memories.size()
+        assert total_len >= MemoryLength
         qx = x
-        sg_m = memories[layer_num][:, m_len-MemoryLength:m_len, :]
+        sg_m = memories[layer_num][:, segment_num*MemoryLength:(segment_num+1)*MemoryLength, :]
         kx = torch.cat((sg_m, x), dim=1)
         vx = torch.cat((sg_m, x), dim=1)
 
@@ -111,6 +120,6 @@ class RelPosMultiHeadSelfAttention(nn.Module):
         rel_pos_attention = self.dropout(rel_pos_attention)
         rel_pos_attention = self.o_dense(rel_pos_attention)
 
-        memories = self.update_memories(memories, rel_pos_attention, layer_num)
+        memories = self.update_memories_by_layer(memories, rel_pos_attention, layer_num, segment_num)
 
         return rel_pos_attention, memories

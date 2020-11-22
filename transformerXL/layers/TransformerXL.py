@@ -19,8 +19,8 @@ class TransformerXL(nn.Module):
                  intermediate_size=IntermediateSize
                  ):
         super(TransformerXL, self).__init__()
-        self.vocab_size = vocab_size
         self.kinds_num = kinds_num
+        self.vocab_size = vocab_size
         self.hidden_size = hidden
         self.sen_length = sen_length
         self.mem_length = mem_length
@@ -31,8 +31,8 @@ class TransformerXL(nn.Module):
         self.intermediate_size = intermediate_size
 
         # 申明网络
-        self.init_memories = nn.Parameter(torch.randn(1, BatchSize, MemoryLength, self.hidden_size)).expand(
-            [BatchSize, MemoryLength, self.hidden_size])
+        self.init_memories = nn.Parameter(torch.randn(MemoryLength, self.hidden_size)).expand(
+            [HiddenLayerNum, BatchSize, MemoryLength, self.hidden_size])
         self.token_emd = TokenEmbedding(vocab_size=self.vocab_size, hidden_size=self.hidden_size)
         self.rel_post_emb = RelPositionEmbedding(self.hidden_size)
         self.transformer_blocks = nn.ModuleList(
@@ -68,8 +68,15 @@ class TransformerXL(nn.Module):
         return torch.tensor(attention_masks)
 
     def forward(self, desc_segments, type_segments):
-        # 这里需要遍历的是第二维度
         _, segments_count, _ = desc_segments.size()
+        # 初始化memories
+        memories = torch.cat((self.init_memories,
+                              torch.zeros([HiddenLayerNum,
+                                           BatchSize,
+                                           segments_count*SentenceLength,
+                                           self.hidden_size])), dim=2)
+
+        # 这里需要遍历的是第二维度
         for segments_num in range(segments_count):
             # 抽取当前batch的当前segment
             input_token = desc_segments[:, segments_num, :]
@@ -82,14 +89,24 @@ class TransformerXL(nn.Module):
             # transformer block
             transformerxl_block_x = None
             attention_mask = self.gen_attention_masks(segment_ids).to(device)
-            for i in range(self.num_hidden_layers):
-                if i == 0:
+            for layers_num in range(self.num_hidden_layers):
+                if layers_num == 0:
                     transformerxl_block_x, new_memories = \
-                        self.transformer_blocks[i](embedding_x, rel_pos_emb, attention_mask, self.init_memories, i)
+                        self.transformer_blocks[layers_num](embedding_x,
+                                                            rel_pos_emb,
+                                                            attention_mask,
+                                                            memories,
+                                                            layers_num,
+                                                            segments_num)
                     memories = new_memories
                 else:
                     transformerxl_block_x, new_memories = \
-                        self.transformer_blocks[i](transformerxl_block_x, rel_pos_emb, attention_mask, memories, i)
+                        self.transformer_blocks[layers_num](transformerxl_block_x,
+                                                            rel_pos_emb,
+                                                            attention_mask,
+                                                            memories,
+                                                            layers_num,
+                                                            segments_num)
                     memories = new_memories
 
         output = self.classify(transformerxl_block_x)
