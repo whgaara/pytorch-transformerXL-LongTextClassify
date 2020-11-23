@@ -19,6 +19,7 @@ Epochs = 16
 BatchSize = 1
 LearningRate = 1e-5
 MemoryLength = 128
+AttentionMask = False
 HiddenLayerNum = 6
 SentenceLength = 128
 PretrainPath = '../../checkpoint/finetune/transformerXL_classify_%s.model' % SentenceLength

@@ -88,8 +88,10 @@ class TransformerXL(nn.Module):
 
             # transformer block
             transformerxl_block_x = None
-            # attention_mask = self.gen_attention_masks(segment_ids).to(device)
-            attention_mask = None
+            if AttentionMask:
+                attention_mask = self.gen_attention_masks(segment_ids).to(device)
+            else:
+                attention_mask = None
 
             for layers_num in range(self.num_hidden_layers):
                 if layers_num == 0:

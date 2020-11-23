@@ -85,15 +85,16 @@ class RelPosMultiHeadSelfAttention(nn.Module):
 
         # 防止padding补全的0经过softmax后影响结果，对每个0值都加一个很大的负数，这样softmax后也会约等于0
         # attention_mask的shape为：[batch_size, qlen, klen]
-        # rel_pos_attention = rel_pos_attention.view(BatchSize,
-        #                                            self.attention_head_num,
-        #                                            SentenceLength,
-        #                                            k_length)
-        # m_supplement = torch.ones([SentenceLength, MemoryLength], dtype=torch.long).to(device)
-        # m_supplement = m_supplement.expand([BatchSize, SentenceLength, MemoryLength]).to(device)
-        # attention_mask = torch.cat((m_supplement, attention_mask), dim=-1).to(device)
-        # add_mask = (1.0 - attention_mask.float()) * 1e9
-        # rel_pos_attention -= add_mask
+        if attention_mask:
+            rel_pos_attention = rel_pos_attention.view(BatchSize,
+                                                       self.attention_head_num,
+                                                       SentenceLength,
+                                                       k_length)
+            m_supplement = torch.ones([SentenceLength, MemoryLength], dtype=torch.long).to(device)
+            m_supplement = m_supplement.expand([BatchSize, SentenceLength, MemoryLength]).to(device)
+            attention_mask = torch.cat((m_supplement, attention_mask), dim=-1).to(device)
+            add_mask = (1.0 - attention_mask.float()) * 1e9
+            rel_pos_attention -= add_mask
 
         rel_pos_attention = self.softmax(rel_pos_attention)
         rel_pos_attention = torch.einsum('ijbn,jbnd->ibnd', (rel_pos_attention, vx))
