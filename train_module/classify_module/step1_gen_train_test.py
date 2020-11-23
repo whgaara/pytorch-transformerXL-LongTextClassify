@@ -42,17 +42,16 @@ class PretrainProcess(object):
                 str(self.max_sentence_length) + '\n')
         f.close()
 
-    def balance(self):
-        for label in self.train_data_set:
-            self.classes_count_list.append(len(self.train_data_set[label]))
-        self.classes_count_list.sort()
-        mean_pos = len(self.classes_count_list) // 2
-        mean_value = self.classes_count_list[mean_pos]
+    def balance(self, mode=0):
+        if mode == 0:
+            mean_value = 1000
+            for label in self.train_data_set:
+                random.shuffle(self.train_data_set[label])
+                self.train_data_set[label] = self.train_data_set[label][:min(len(self.train_data_set[label]), mean_value)]
 
-        f1 = open(CorpusPath, 'w', encoding='utf-8')
-        f2 = open(EvalPath, 'w', encoding='utf-8')
-        for label, descs in self.train_data_set.items():
-            if len(descs) < mean_value:
+            f1 = open(CorpusPath, 'w', encoding='utf-8')
+            f2 = open(EvalPath, 'w', encoding='utf-8')
+            for label, descs in self.train_data_set.items():
                 random.shuffle(descs)
                 cut_point = int(len(descs) * 0.9)
                 train = descs[:cut_point]
@@ -63,18 +62,40 @@ class PretrainProcess(object):
                 for desc in eval:
                     desc = [str(x) for x in desc]
                     f2.write(str(label) + ',' + ' '.join(desc) + '\n')
-            else:
-                random.shuffle(descs)
-                train = descs[:mean_value]
-                eval = descs[mean_value:]
-                for desc in train:
-                    desc = [str(x) for x in desc]
-                    f1.write(str(label) + ',' + ' '.join(desc) + '\n')
-                for desc in eval:
-                    rnd = random.random()
-                    if rnd < 0.1:
+
+        if mode == 1:
+            for label in self.train_data_set:
+                self.classes_count_list.append(len(self.train_data_set[label]))
+            self.classes_count_list.sort()
+            mean_pos = len(self.classes_count_list) // 2
+            mean_value = self.classes_count_list[mean_pos]
+
+            f1 = open(CorpusPath, 'w', encoding='utf-8')
+            f2 = open(EvalPath, 'w', encoding='utf-8')
+            for label, descs in self.train_data_set.items():
+                if len(descs) < mean_value:
+                    random.shuffle(descs)
+                    cut_point = int(len(descs) * 0.9)
+                    train = descs[:cut_point]
+                    eval = descs[cut_point:]
+                    for desc in train:
+                        desc = [str(x) for x in desc]
+                        f1.write(str(label) + ',' + ' '.join(desc) + '\n')
+                    for desc in eval:
                         desc = [str(x) for x in desc]
                         f2.write(str(label) + ',' + ' '.join(desc) + '\n')
+                else:
+                    random.shuffle(descs)
+                    train = descs[:mean_value]
+                    eval = descs[mean_value:]
+                    for desc in train:
+                        desc = [str(x) for x in desc]
+                        f1.write(str(label) + ',' + ' '.join(desc) + '\n')
+                    for desc in eval:
+                        rnd = random.random()
+                        if rnd < 0.1:
+                            desc = [str(x) for x in desc]
+                            f2.write(str(label) + ',' + ' '.join(desc) + '\n')
 
 
 if __name__ == '__main__':
